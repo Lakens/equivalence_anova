@@ -177,7 +177,7 @@ sum(simresults, na.rm=TRUE)/nSim
 #################################################
 #################################################
 
-## Non-equivalence test for population signal-to-noise 
+## Non-inferiority test for population signal-to-noise 
 ## ratio (i.e., phi_p^2) for the pth fixed effects 
 ## factor in an ANOVA setting
 
@@ -214,19 +214,6 @@ ci.snr(F.value=3.25, df.1=4, df.2=50, N=55, alpha.lower=0.00, alpha.upper=0.05)
 # (1-noninf.pval)% C.I. one-sided confidence interval:
 ci.snr(F.value=3.25, df.1=4, df.2=50, N=55, alpha.lower=0.00, alpha.upper=noninf.pval)
 
-
-## correct type 1 error? (!!!takes five minutes!!!):
-nSim <- 100
-simresults <- apply(cbind(1:nSim),1, 
-	function(x){
-		if(round(x/21)==(x/21)){print(round(x/nSim,2))}
-		 
-		 
-		 			pop_sig_to_noise(F.value= , df.1= , df.2= , N= , delta_upper=0.5)<0.05
-				} 
-			)
-
-sum(simresults, na.rm=TRUE)/nSim
 
 
 # Example from: https://rstudio-pubs-static.s3.amazonaws.com/251565_e4ac68427b134454a88b43fb02ea66ef.html
@@ -278,7 +265,18 @@ noninf.pval
 ci.snr(F.value=F_val, df.1= df.Between, df.2= df.F, N=N, alpha.lower=0, alpha.upper=noninf.pval)
 
 
+## correct type 1 error?:
+nSim <- 100
+simresults <- apply(cbind(1:nSim),1, 
+	function(x){
+		if(round(x/21)==(x/21)){print(round(x/nSim,2))}
+		 # simulate data with true signal-to-noise
+		 # equal to 1+epsilon.
+		pop_sig_to_noise(F.value= , df.1= , df.2= , N= , delta_upper=1)<0.05
+				} 
+			)
 
+sum(simresults, na.rm=TRUE)/nSim
 
 #################################################
 #################################################
