@@ -197,6 +197,7 @@ zzz <- zzz + tol
 invisible(capture.output(CI_x <- CI(zzz)))
 if(sum(is.na(CI_x))<1){
 within <- CI_x[2]<delta_upper}
+if(zzz>0.99){within<-TRUE}
 }
 return(zzz)
 }
@@ -264,19 +265,100 @@ noninf.pval
 # (1-noninf.pval)% C.I. one-sided confidence interval:
 ci.snr(F.value=F_val, df.1= df.Between, df.2= df.F, N=N, alpha.lower=0, alpha.upper=noninf.pval)
 
+####################################
+### simulation of J=3 groups data, with 
+### true population signal-to-noise ratio
+### of 0.667 :
+
+simdata<-function(){
+sigma2e <- 1
+
+mu <- 0
+mu1 <- -1
+mu2 <- 0
+mu3 <- 1
+
+n1 <- 10
+n2 <- 20
+n3 <- 30
+N <- sum(c(n1,n2,n3))
+
+tao1 <- mu1-mu
+tao2 <- mu2-mu
+tao3 <- mu3-mu
+
+dat1 <- rnorm(n1,mu1,sqrt(sigma2e))
+dat2 <- rnorm(n2,mu2,sqrt(sigma2e))
+dat3 <- rnorm(n3,mu3,sqrt(sigma2e))
+
+dat <- c(dat1,dat2,dat3)
+groups <- as.factor(c(rep(1,n1),rep(2,n2),rep(3,n3)))
+
+aovdata<-data.frame(dat=dat, groups= groups)
+
+Lambda <-  sum(c(n1*tao1^2,n2*tao2^2,n3*tao3^2))/sigma2e
+Lambda
+# Alternatively, Equation 42 can be written as:
+
+sigma2p<- sum(c(n1*tao1^2,n2*tao2^2,n3*tao3^2))/N
+
+N*sigma2p/sigma2e
+
+# The signal-to-noise ratio is defined as:
+
+phi2 <- sigma2p/sigma2e
+phi2
+# or:
+
+Lambda/N
+
+# and the proportion of variance in Y accounted for by knowing the level of the factor (or group status in a single factor design) is defined as:
+
+eta2 <- Lambda/(Lambda+N)
+
+return((aovdata))}
+
+
+aovdata<-simdata()
+dat<-aovdata$dat
+groups<-aovdata$groups
+N<-dim(aovdata)[1]
+
+ttt<-(summary(aov(dat~groups)))
+ 
+# 90% two-sided confidence interval: 
+ci.snr(F.value=ttt[[1]]$F[1], df.1= ttt[[1]]$Df[1], df.2= ttt[[1]]$Df[2], N=N, conf.level=0.90)
+
+# 95% one-sided confidence interval: 
+ci.snr(F.value=ttt[[1]]$F[1], df.1= ttt[[1]]$Df[1], df.2= ttt[[1]]$Df[2], N=N, alpha.lower=0, alpha.upper=0.05)
+
+
+# Non-inferiority test p-value (H0: phi_p^2>0.65 vs. H1: phi_p^2<=0.65)
+noninf.pval <- pop_sig_to_noise(F.value= ttt[[1]]$F[1], df.1= ttt[[1]]$Df[1], df.2= ttt[[1]]$Df[2], N=N, delta_upper=0.65)
+noninf.pval
+
+
+
+
+
 
 ## correct type 1 error?:
-nSim <- 100
+nSim <- 1000
 simresults <- apply(cbind(1:nSim),1, 
 	function(x){
 		if(round(x/21)==(x/21)){print(round(x/nSim,2))}
-		 # simulate data with true signal-to-noise
-		 # equal to 1+epsilon.
-		pop_sig_to_noise(F.value= , df.1= , df.2= , N= , delta_upper=1)<0.05
+		 # simulate data from the null
+		 # with true signal-to-noise
+		 # equal to 0.667.
+		 aovdata<-simdata() 
+		ttt<-(summary(aov(aovdata$dat~aovdata$groups)))
+		pop_sig_to_noise(F.value= ttt[[1]]$F[1], df.1= ttt[[1]]$Df[1], df.2= ttt[[1]]$Df[2], N=dim(aovdata)[1], delta_upper=0.65)<0.05
 				} 
 			)
 
 sum(simresults, na.rm=TRUE)/nSim
+
+## It seems twice as big as it should be....???
 
 #################################################
 #################################################
