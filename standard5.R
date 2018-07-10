@@ -5,8 +5,23 @@
 
 library(MBESS)
 
+
+# Eight functions:
+
+# 1. cohen_d()  corresponds to ci.sm()
+# 2. cohen_d_twosample()  corresponds to ci.smd()
+# 3. pop_sig_to_noise() coresponds to ci.snr()
+# 4. pop_prop_of_var() corresponds to ci.pvaf()
+# 5. sqrt_pop_sig_to_noise() corresponds to ci.srsnr()
+# 6. std_targeted_eff() corresponds to ci.sc()  ### work needs to be done ###
+# 7. equiv_R2() corresponds to ci.R2()
+# 8. equiv_beta.k() correpsonds to ci.src()  ### work needs to be done ###
+
+
 #################################################
 #################################################
+
+# 1. cohen_d()  corresponds to ci.sm()
 
 ## Equivalence (and non-inferiority) test for the 
 ## standardized mean difference (one group)
@@ -86,6 +101,8 @@ sum(simresults, na.rm=TRUE)/nSim
 
 #################################################
 #################################################
+
+# 2. cohen_d_twosample()  corresponds to ci.smd()
 
 ## Equivalence test for the standardized mean 
 ## difference for two independent groups
@@ -244,6 +261,8 @@ return((aovdata))}
 #################################################
 #################################################
 
+# 3. pop_sig_to_noise() coresponds to ci.snr()
+
 ## Non-inferiority test for population signal-to-noise 
 ## ratio (i.e., phi_p^2) for the pth fixed effects 
 ## factor in an ANOVA setting
@@ -371,6 +390,8 @@ sum(simresults, na.rm=TRUE)/nSim
 #################################################
 #################################################
 
+# 4. pop_prop_of_var() corresponds to ci.pvaf()
+
 ## Equivalence test for the population proportion 
 ## of variance accounted for in the dependent 
 ## variable by knowing group status (i.e., eta_p^2) 
@@ -442,6 +463,8 @@ sum(simresults, na.rm=TRUE)/nSim
 
 #################################################
 #################################################
+
+# 5. sqrt_pop_sig_to_noise() corresponds to ci.srsnr()
 
 ## Non-inferiority test for the square root of 
 ## the signal-to-noise ratio for the pth 
@@ -516,12 +539,14 @@ sum(simresults, na.rm=TRUE)/nSim
 #################################################
 #################################################
 
+# 6. std_targeted_eff() corresponds to ci.sc()  ### work needs to be done ###
+
 ## Equivalence test for standardized targeted effects in ANOVA
 ## (for the population standardized comparison (i.e., phi) 
 ##  in an ANOVA setting)
 ## (see Kelley (2007), section 3.3)
 
-std_tageted_eff<-function(means, s.anova, c.weights, n, N, my_n, delta_lower=0.5, delta_upper=+1.5, tol=0.001){
+std_targeted_eff<-function(means, s.anova, c.weights, n, N, my_n, delta_lower=0.5, delta_upper=+1.5, tol=0.001){
 	
 	my_means <- means
 	my_s.anova <- s.anova
@@ -549,11 +574,13 @@ return(zzz)
 }
 
 ## example:
-std_tageted_eff(means=c(2, 4, 9, 13), s.anova=.80, c.weights=c(.5, -.5, -.5, .5), n=c(30, 30, 30, 30), N=120, 0.15,0.95)
+std_targeted_eff(means=c(2, 4, 9, 13), s.anova=.80, c.weights=c(.5, -.5, -.5, .5), n=c(30, 30, 30, 30), N=120, 0.15,0.95)
 
 
 #################################################
 #################################################
+
+# 7. equiv_R2() corresponds to ci.R2()
 
 ## Equivalence test for the population 
 ## squared multiple correlation coeffcient (i.e., P2). 
@@ -561,20 +588,32 @@ std_tageted_eff(means=c(2, 4, 9, 13), s.anova=.80, c.weights=c(.5, -.5, -.5, .5)
 
 
 
-equiv_R2<-function(R2, N, K, Random.Regressors=FALSE, delta_lower=0, delta_upper=0.25, tol=0.001){
+equiv_R2<-function(R2, N, K, Random.Regressors=FALSE, delta_lower, delta_upper, one.sided=FALSE, tol=0.001){
 
-if(delta_upper<R2){stop("R2 outside of margin")}	
-if(delta_lower>R2){stop("R2 outside of margin")}	
+if(one.sided==FALSE){
+	if(delta_upper<R2){warning("R2 outside of margin"); return(NA)}
+	if(delta_lower> R2){warning("R2 outside of margin"); return(NA)}
+CI<-function(x){unlist(	
+	ci.R2(R2=my_R2, N=my_N, K=my_K, conf.level=(1-2*x), Random.Regressors= my_Random.Regressors)[c(1,3)]    )}
+}
+
+
+if(one.sided=="upper"){
+	if(delta_upper<R2){warning("R2 outside of margin"); return(NA)}
+	CI<-function(x){
+		unlist((ci.R2(R2=my_R2, N=my_N, K=my_K, alpha.upper=x, alpha.lower=0,Random.Regressors= my_Random.Regressors)[c(1,3)]))}}
+
+
+if(one.sided=="lower"){
+	if(delta_lower>R2){warning("R2 outside of margin"); return(NA)}
+	CI<-function(x){
+		unlist((ci.R2(R2=my_R2, N=my_N, K=my_K, alpha.upper=0, alpha.lower=x,Random.Regressors= my_Random.Regressors)[c(1,3)]))}}
+
 	
 	my_R2 <- R2
 	my_N <- N
 	my_K <- K
 	my_Random.Regressors <- Random.Regressors
-
-CI<-function(x){unlist(
-	
-	ci.R2(R2=my_R2, N=my_N, K=my_K, conf.level=(1-2*x), Random.Regressors= my_Random.Regressors)[c(1,3)]    )
-	}
 
 zzz<-0.000
 within<-FALSE
@@ -582,19 +621,141 @@ while(within==FALSE){
 zzz <- zzz + tol
 invisible(capture.output(CI_x <- CI(zzz)))
 if(sum(is.na(CI_x))<1){
-within <- CI_x[1]>delta_lower &  CI_x[2]<delta_upper
+if(one.sided==FALSE){within <- CI_x[1]>delta_lower &  CI_x[2]<delta_upper}
+if(one.sided=="upper"){within <- CI_x[2]<delta_upper}
+if(one.sided=="lower"){within <-  CI_x[1]>delta_lower}
+}	
 }
-if(zzz>0.49){within<-TRUE}
-}
-
 return(zzz)
 }
 
-equiv_R2(R2=0.13, N=30, K=4, Random.Regressors=FALSE)
+
+
+
+
+## simulate linear regression data with true population P2=0.28
+simdatalm<-function(nfactor=1, Random.Regressors=TRUE){
+
+if(Random.Regressors==FALSE){
+x1 <- seq(5,90,length.out=10*nfactor)
+x2 <- c(rep(c(0,1), 5*nfactor))
+}
+
+if(Random.Regressors==TRUE){
+x1 <- runif(10*nfactor,5,90)
+x2 <- rbinom(10*nfactor,1,0.5)
+}
+
+
+b0 <- 17
+b1 <- 0.5
+b2 <- 0.01
+
+sigma <- 20
+
+eps <- rnorm(10*nfactor,0,sigma)
+y <- b0 + b1*x1  + b2*x2  + b3*x3 + eps
+(var(y) - var(eps))/var(y)
+lmdata<-data.frame(y,x1,x2)
+return(lmdata)
+}
+
+equiv_R2(R2=0.13, N=30, K=4, delta_upper=0.2, delta_lower=0,Random.Regressors=TRUE)
+
+lmdat<-simdatalm(100)
+myR2<-(summary(lm(y~., data=lmdat)))$r.squared
+myN<-dim(lmdat)[1]
+myK<-dim(lmdat)[2]-1
+equiv_R2(R2=myR2, N=myN, K=myK, Random.Regressors=FALSE, delta_upper=0.30)
+
+
+ 
+## correct type 1 error? for Random.Regressors=TRUE
+nSim <- 1000
+simresults <- apply(cbind(1:nSim),1, 
+	function(x){
+		if(round(x/21)==(x/21)){print(round(x/nSim,2))}
+		 # simulate data from the null
+		 # with true true P2=0.28
+		lmdat<-simdatalm(10, Random.Regressors=TRUE)
+myR2<-(summary(lm(y~., data=lmdat)))$r.squared
+myN<-dim(lmdat)[1]
+myK<-dim(lmdat)[2]-1
+pval<-equiv_R2(R2=myR2, N=myN, K=myK, Random.Regressors=TRUE, delta_upper=0.275, one.sided="upper")
+	
+		return(pval<0.05)
+				} 
+			)
+
+sum(simresults, na.rm=TRUE)/nSim
+
+
+## correct type 1 error? for Random.Regressors=FALSE
+nSim <- 1000
+simresults <- apply(cbind(1:nSim),1, 
+	function(x){
+		if(round(x/21)==(x/21)){print(round(x/nSim,2))}
+		 # simulate data from the null
+		 # with true true P2=0.28
+		lmdat<-simdatalm(10, Random.Regressors=FALSE)
+myR2<-(summary(lm(y~., data=lmdat)))$r.squared
+myN<-dim(lmdat)[1]
+myK<-dim(lmdat)[2]-1
+pval<-equiv_R2(R2=myR2, N=myN, K=myK, Random.Regressors=FALSE, delta_upper=0.275, one.sided="upper")
+	
+		return(pval<0.05)
+				} 
+			)
+
+sum(simresults, na.rm=TRUE)/nSim
+
+## NOTE THAT type 1 error is incorrect when Random.Regressors does not match:
+
+
+### TOO BIG :
+nSim <- 1000
+simresults <- apply(cbind(1:nSim),1, 
+	function(x){
+		if(round(x/21)==(x/21)){print(round(x/nSim,2))}
+		 # simulate data from the null
+		 # with true true P2=0.28
+		lmdat<-simdatalm(10, Random.Regressors=TRUE)
+myR2<-(summary(lm(y~., data=lmdat)))$r.squared
+myN<-dim(lmdat)[1]
+myK<-dim(lmdat)[2]-1
+pval<-equiv_R2(R2=myR2, N=myN, K=myK, Random.Regressors=FALSE, delta_upper=0.275, one.sided="upper")
+	
+		return(pval<0.05)
+				} 
+			)
+
+sum(simresults, na.rm=TRUE)/nSim
+
+### OR too small :
+nSim <- 1000
+simresults <- apply(cbind(1:nSim),1, 
+	function(x){
+		if(round(x/21)==(x/21)){print(round(x/nSim,2))}
+		 # simulate data from the null
+		 # with true true P2=0.28
+		lmdat<-simdatalm(10, Random.Regressors=FALSE)
+myR2<-(summary(lm(y~., data=lmdat)))$r.squared
+myN<-dim(lmdat)[1]
+myK<-dim(lmdat)[2]-1
+pval<-equiv_R2(R2=myR2, N=myN, K=myK, Random.Regressors=TRUE, delta_upper=0.275, one.sided="upper")
+	
+		return(pval<0.05)
+				} 
+			)
+
+sum(simresults, na.rm=TRUE)/nSim
+
 
 
 #################################################
 #################################################
+
+# 8. equiv_beta.k() correpsonds to ci.src()  ### work needs to be done ###
 
 ## Equivalence test for population 
 ## standardized regression coeffcient
