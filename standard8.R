@@ -277,7 +277,9 @@ pop_sig_to_noise<-function(F.value, df.1, df.2, N, delta_upper){
 	my_df.1 <- df.1
 	my_df.2 <- df.2
 	my_N <- N
-print(c(F.value, df.1, df.2, N, delta_upper))
+
+
+
 # First find out what is the estimated signal-to-noise-ratio:
 signal_to_noise_hat<-mean(unlist(ci.snr(F.value= my_F, df.1= my_df.1, df.2=my_df.2, N= my_N, alpha.lower=0.48, alpha.upper=0.48)), na.rm=TRUE)
 
