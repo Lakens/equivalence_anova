@@ -81,7 +81,10 @@ noninf_Fstat <-  function(Fstat, df1, df2, N, eq_bound_eta, alpha = 0.10, tol = 
     y=seq(0.00000000001,eta_pop_crit,length=10000) 
     z<-df((y*df2)/(df1-y*df1), df1, df2, ncp) #determine upperbounds polygon
     polygon(c(y,eta_pop_crit,eta_pop_crit),c(0,z,0),col=rgb(0, 0, 1,0.5))
-    segments(eta_pop_crit, 0, eta_pop_crit, ymax-0.03, col= 'black', lwd=2)
+    #segments(eta_pop_crit, 0, eta_pop_crit, ymax-0.03, col= 'black', lwd=2)
+    segments(LL_CI, 0, LL_CI, ymax-0.03, col = 'grey', lwd = 2, lty = 2)
+    segments(UL_CI, 0, UL_CI, ymax-0.03, col = 'grey', lwd = 2, lty = 2)
+    segments(eta2_hat, 0, eta2_hat, ymax-0.03, col = 'darkgrey', lwd = 2, lty = 1)
     
     
     
@@ -91,11 +94,11 @@ noninf_Fstat <-  function(Fstat, df1, df2, N, eq_bound_eta, alpha = 0.10, tol = 
 
 ## a random example:
 
-Fstat <- 1
+Fstat <- 6
 df1 <- 1
-df2 <- 49
+df2 <- 48
 N <- 50
-eq_bound_eta <- 0.3
+eq_bound_eta <- 0.34
 
 res <- noninf_Fstat(Fstat = Fstat, df1 = df1, df2 = df2, N = N, eq_bound_eta = eq_bound_eta)
 res
