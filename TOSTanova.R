@@ -83,10 +83,8 @@ noninf_Fstat <-  function(Fstat, df1, df2, N, eq_bound_eta, alpha = 0.10, tol = 
     # y=seq(0.00000000001,eta_pop_crit,length=10000) 
     # z<-df((y*df2)/(df1-y*df1), df1, df2, ncp) #determine upperbounds polygon
     # polygon(c(y,eta_pop_crit,eta_pop_crit),c(0,z,0),col=rgb(0, 0, 1,0.5))
-    #segments(eta_pop_crit, 0, eta_pop_crit, ymax-0.03, col= 'black', lwd=2)
-    segments(LL_CI, 0, LL_CI, ymax-0.03, col = 'grey', lwd = 2, lty = 2)
-    segments(UL_CI, 0, UL_CI, ymax-0.03, col = 'grey', lwd = 2, lty = 2)
-    segments(eta2_hat, 0, eta2_hat, ymax-0.03, col = 'darkgrey', lwd = 2, lty = 1)
+    abline(v=eq_bound_eta, lty=2)
+    abline(v=eta2_hat, lty=2, col="grey")
     points(x=eta2_hat, y=0.7, pch=15, cex=2)
     segments(LL_CI,0.7,UL_CI,0.7, lwd=3)
     
