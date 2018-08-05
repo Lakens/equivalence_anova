@@ -1,8 +1,4 @@
-noninf_Fstat <-  function(Fstat, df1, df2, N, eq_bound_eta, alpha = 0.10, tol = 1e-09){
-  
-  df1 <- 2
-  df2 <- 48
-  N <- 50
+noninf_Fstat <-  function(Fstat, df1, df2, N, eq_bound_eta, alpha = 0.10, tol = 1e-09, plot = FALSE){
   
   # first calculate point-estimate to make sure it is less than eq_bound_eta:
   ncp_hat <- uniroot(function(q) (pf(Fstat, 
@@ -17,20 +13,24 @@ noninf_Fstat <-  function(Fstat, df1, df2, N, eq_bound_eta, alpha = 0.10, tol = 
   eta_pop<-(Fstat*df1)/(Fstat*df1+df2)
   ncp = N/(1/eta_pop-1)
   
-  print(c("ncp_hat", "eta2_hat"))
-  print(round(c(ncp_hat, eta2_hat),3))
-  
   if(eta2_hat > eq_bound_eta){
     print(paste("Warning: point estimate of", eta2_hat, "is above eq_bound_eta."))
     return(1)
   }
   #Then calculate CI around eta.
-  ncp_lower <- uniroot(function(q) (pf(Fstat, 
-                                       df1, 
-                                       df2, 
-                                       ncp = q) - (1-alpha/2)),
-                       interval = c(0, Fstat * df1),
-                       tol = tol)$root
+  #Lower bounds can give an error, which is caught using tryCatch, and lower bound is set to 0 if this happens. 
+  ncp_lower <- tryCatch(
+    {
+      ncp_lower <- uniroot(function(q) (pf(Fstat, 
+                                           df1, 
+                                           df2, 
+                                           ncp = q) - (1-alpha/2)),
+                           interval = c(0, Fstat * df1),
+                           tol = tol)$root},
+    error = function(x){
+      ncp_lower <- 0
+    }
+  )
   
   ncp_upper <- uniroot(function(q) (pf(Fstat, 
                                        df1, 
@@ -51,6 +51,9 @@ noninf_Fstat <-  function(Fstat, df1, df2, N, eq_bound_eta, alpha = 0.10, tol = 
                                  1),
                     tol = tol)$root
   }
+  if(pval==0){print(paste("warning: pval <=", tol,". Lower tol for additional accuracy."))}
+
+    if(plot == TRUE){
     #add plot
     #Eta function
     xmin <- 0
@@ -87,19 +90,21 @@ noninf_Fstat <-  function(Fstat, df1, df2, N, eq_bound_eta, alpha = 0.10, tol = 
     abline(v=eta2_hat, lty=2, col="grey")
     points(x=eta2_hat, y=0.7, pch=15, cex=2)
     segments(LL_CI,0.7,UL_CI,0.7, lwd=3)
+  }
     
-    
-    invisible(list(eta2_hat = , TOST_p = pval, alpha = alpha, eq_eqbound_eta = eq_bound_eta, LL_CI_TOST = LL_CI, UL_CI_TOST = UL_CI))
+    invisible(list(eta2_hat = eta2_hat, TOST_p = pval, alpha = alpha, eq_eqbound_eta = eq_bound_eta, LL_CI_TOST = LL_CI, UL_CI_TOST = UL_CI))
   
 }
 
 ## a random example:
 
-Fstat <- 6
+Fstat <- 1.3
 df1 <- 1
-df2 <- 48
-N <- 50
-eq_bound_eta <- 0.38
+df2 <- 148
+N <- 150
+eq_bound_eta <- 0.0588
+tol = 1e-09
+alpha = 0.05
 
-res <- noninf_Fstat(Fstat = Fstat, df1 = df1, df2 = df2, N = N, eq_bound_eta = eq_bound_eta)
+res <- noninf_Fstat(Fstat = Fstat, df1 = df1, df2 = df2, N = N, eq_bound_eta = eq_bound_eta, plot = TRUE)
 res
