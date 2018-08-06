@@ -23,8 +23,6 @@ dfw= ttt[[1]]$Df[2]
 SSb= (ttt[[1]])$"Sum Sq"[1]
 SSw= (ttt[[1]])$"Sum Sq"[2]
 SSt= SSb + SSw
-dfb= (ttt[[1]])$Df[1]
-dfw= (ttt[[1]])$Df[2]
 MSb= (ttt[[1]])$"Mean Sq"[1]
 MSw= (ttt[[1]])$"Mean Sq"[2]
 
@@ -264,7 +262,7 @@ colMeans(coldata)
 
 
 # Run an ANOVA anlaysis:
-aovobject<- aov(y~a +Error(subject/a), data= dat)
+aovobject<- aov(y~a +Error(subject), data= dat)
 
 # Run a non-inferiority test with delta=0.45
 # Note that N is the number of observations:
@@ -284,7 +282,7 @@ simresults <- apply(cbind(1:nSim),1,
 	function(x){
 				if(round(x/37)==(x/37)){print(paste("% complete:",round(x/nSim,2)))}
 			aovdata<-simdata_within(100)
- 			   aovobj <-aov(y~a +Error(subject/a), data= aovdata)
+ 			   aovobj <-aov(y~a +Error(subject), data= aovdata)
 				result<-noninf_Fstat(aovobj, eq_bound_eta=0.3999, within=TRUE)
 				return(unlist(result))
 				} 
